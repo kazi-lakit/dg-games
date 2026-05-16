@@ -19,4 +19,7 @@ export const menuItems: MenuItem[] = [
   createMenuItem('iam', 'IAM', '/identity-management', 'Users', {
     isIntegrated: true,
   }),
+  createMenuItem('teams', 'Teams', '/teams', 'Shield'),
+  createMenuItem('tournaments', 'Tournaments', '/tournaments', 'Trophy'),
+  createMenuItem('matches', 'Matches', '/matches', 'Swords'),
 ];

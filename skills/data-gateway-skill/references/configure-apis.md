@@ -109,9 +109,15 @@ Starts the gateway if not running. Wait a few seconds then retry ping.
 
 ### Reload GraphQL Configuration
 ```
-POST /uds/v1/configurations/reload?projectKey={projectKey}
+POST /uds/v1/{projectShortKey}/configurations/reload?projectKey={projectKey}
 ```
-**Call after any schema, field, access, or validation change to make it live.**
+Example:
+```
+POST https://api.seliseblocks.com/uds/v1/abc/configurations/reload?projectKey=D4745adc9f2564981aae2826bfc64ba79
+```
+- `projectShortKey` goes in the **path** (from data source GET response)
+- `projectKey` goes as a **query parameter**
+- ⚠️ MANDATORY after any schema, field, validation, or access change — without this, changes are NOT reflected in GraphQL
 
 ---
 

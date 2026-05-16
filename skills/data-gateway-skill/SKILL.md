@@ -171,7 +171,7 @@ Always start with a Bearer token, then follow the four phases in order.
 
 ── PHASE 4: Reload (MANDATORY after any change) ─────────────────────────────
 
-  POST /uds/v1/configurations/reload?projectKey=...
+  POST /uds/v1/{projectShortKey}/configurations/reload?projectKey=<projectKey>
 
   ⚠️ This step is MANDATORY after ANY of the following:
       - Schema created or updated

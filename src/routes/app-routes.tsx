@@ -2,6 +2,9 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { NotFoundPage, ServiceUnavailablePage } from '@/modules/error-view';
 import { ProfilePage } from '@/modules/profile';
 import { UsersTablePage } from '@/modules/iam';
+import { TeamsListPage } from '@/modules/teams';
+import { TournamentsListPage } from '@/modules/tournaments';
+import { MatchesListPage } from '@/modules/matches';
 import { MainLayout } from '@/layout/main-layout/main-layout';
 import { AuthRoutes } from './auth.route';
 import { Guard } from '@/state/store/auth/guard';
@@ -33,6 +36,9 @@ export const AppRoutes = () => {
                 }
               >
                 <Route path="/identity-management" element={<UsersTablePage />} />
+                <Route path="/teams" element={<TeamsListPage />} />
+                <Route path="/tournaments" element={<TournamentsListPage />} />
+                <Route path="/matches" element={<MatchesListPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/503" element={<ServiceUnavailablePage />} />
                 <Route path="/404" element={<NotFoundPage />} />
