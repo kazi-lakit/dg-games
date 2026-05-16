@@ -25,7 +25,7 @@ export const SsoActivationPage = ({ provider: propProvider }: SsoCallbackProps) 
 
   useSsoActivation(provider);
 
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  if (isAuthenticated) return <Navigate to="/identity-management" replace />;
   if (!provider) return <Navigate to="/login" replace />;
 
   return <LoadingOverlay />;

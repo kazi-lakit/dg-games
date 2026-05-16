@@ -3,7 +3,7 @@ import { menuItems } from '../constant/sidebar-menu';
 describe('menuItems', () => {
   test('should have the correct structure', () => {
     expect(Array.isArray(menuItems)).toBe(true);
-    expect(menuItems.length).toBe(14);
+    expect(menuItems.length).toBe(1);
   });
 
   test('each menu item should have required properties', () => {
@@ -17,20 +17,6 @@ describe('menuItems', () => {
       expect(typeof item.path).toBe('string');
       expect(typeof item.icon).toBe('string');
     });
-  });
-
-  test('dashboard item should have correct values', () => {
-    const dashboardItem = menuItems.find((item) => item.id === 'dashboard');
-    expect(dashboardItem).toBeDefined();
-    expect(dashboardItem).toEqual({
-      id: 'dashboard',
-      name: 'DASHBOARD',
-      path: '/dashboard',
-      icon: 'LayoutDashboard',
-    });
-    if (dashboardItem) {
-      expect(dashboardItem.isIntegrated).toBeUndefined();
-    }
   });
 
   test('IAM item should be integrated', () => {

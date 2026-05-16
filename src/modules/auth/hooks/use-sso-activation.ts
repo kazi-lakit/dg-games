@@ -61,7 +61,7 @@ export function useSsoActivation(provider?: string) {
         if ('access_token' in res && res.access_token) {
           login(res.access_token, res.refresh_token ?? '');
           setTokens({ accessToken: res.access_token, refreshToken: res.refresh_token ?? '' });
-          return navigate('/dashboard', { replace: true });
+          return navigate('/identity-management', { replace: true });
         }
 
         const activationPath =
