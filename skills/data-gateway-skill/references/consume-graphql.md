@@ -102,32 +102,59 @@ query ListProducts {
 }
 ```
 
-### List with filter
+### List with filter (`where`), sorting (`order`), pagination (`paging`)
 ```graphql
-query FilterProducts($filter: ProductFilterInput) {
-  products(filter: $filter) {
-    items { id name price }
+query ListProducts($where: ProductFilterInput, $order: ProductSortInput, $paging: PagingInput) {
+  products(where: $where, order: $order, paging: $paging) {
+    items { id name price sku }
     totalCount
   }
 }
 ```
 Variables:
 ```json
-{ "filter": { "price": { "gte": 10.0 }, "name": { "contains": "widget" } } }
-```
-
-### List with sort and pagination
-```graphql
-query {
-  products(
-    sort: { field: "price", isDescending: true }
-    pagination: { pageNo: 1, pageSize: 10 }
-  ) {
-    items { id name price }
-    totalCount
+{
+  "where": {
+    "price": { "gte": 10.0 },
+    "name": { "contains": "widget" }
+  },
+  "order": {
+    "field": "price",
+    "direction": "DESC"
+  },
+  "paging": {
+    "pageNo": 1,
+    "pageSize": 10
   }
 }
 ```
+
+**`where`** — filter conditions per field. Common operators:
+| Operator | Meaning |
+|----------|---------|
+| `eq` | Equals |
+| `neq` | Not equals |
+| `contains` | String contains |
+| `startsWith` | String starts with |
+| `endsWith` | String ends with |
+| `gt` | Greater than |
+| `gte` | Greater than or equal |
+| `lt` | Less than |
+| `lte` | Less than or equal |
+| `in` | Value in list |
+| `isNull` | Field is null |
+
+**`order`** — sort by a single field:
+```json
+{ "field": "price", "direction": "ASC" }
+{ "field": "createdAt", "direction": "DESC" }
+```
+
+**`paging`** — pagination:
+```json
+{ "pageNo": 1, "pageSize": 20 }
+```
+`pageNo` starts at 1. `pageSize` is the number of records per page.
 
 ---
 
