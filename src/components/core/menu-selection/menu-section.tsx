@@ -3,7 +3,7 @@ import { MenuItem } from '@/models/sidebar';
 import { SidebarMenuItemComponent } from '../sidebar-menu-item/sidebar-menu-Item';
 
 interface MenuSectionProps {
-  title: string;
+  title?: string;
   items: MenuItem[];
   showText: boolean;
   pathname: string;

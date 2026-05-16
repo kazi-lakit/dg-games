@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { Sidebar, SidebarContent, SidebarHeader, useSidebar } from '@/components/ui-kit/sidebar';
 import { useTheme } from '@/styles/theme/theme-provider';
 import { getSidebarStyle } from '@/lib/utils/sidebar-utils';
@@ -47,13 +46,10 @@ import { menuItems } from '@/constant/sidebar-menu';
 export const AppSidebar = () => {
   const { theme } = useTheme();
   const { pathname } = useLocation();
-  const { t } = useTranslation();
-  const { setOpenMobile, open, isMobile, openMobile } = useSidebar();
+const { setOpenMobile, open, isMobile, openMobile } = useSidebar();
 
   const filteredMenuItems = useFilteredMenu(menuItems);
 
-  const integratedMenuItems = filteredMenuItems.filter((item) => item.isIntegrated === true);
-  const designOnlyMenuItems = filteredMenuItems.filter((item) => item.isIntegrated !== true);
 
   useEffect(() => {
     if (!isMobile) {
@@ -84,16 +80,7 @@ export const AppSidebar = () => {
 
       <SidebarContent className="text-base ml-4 mr-2 my-3 text-high-emphasis font-normal overflow-x-hidden">
         <MenuSection
-          title={t('CLOUD_INTEGRATED')}
-          items={integratedMenuItems}
-          showText={open || isMobile}
-          pathname={pathname}
-          onItemClick={isMobile ? () => setOpenMobile(false) : undefined}
-        />
-
-        <MenuSection
-          title={t('DESIGN_ONLY')}
-          items={designOnlyMenuItems}
+          items={filteredMenuItems}
           showText={open || isMobile}
           pathname={pathname}
           onItemClick={isMobile ? () => setOpenMobile(false) : undefined}
