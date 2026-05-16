@@ -57,79 +57,85 @@ query {
 
 ## Auto-Generated Operations
 
-For each published schema (e.g. `Product`), Data Gateway auto-generates:
+For each published Entity schema (e.g. schema named `Test`), Data Gateway auto-generates:
 
 | Operation | GraphQL name | Type |
 |-----------|-------------|------|
-| Get single | `product(id: ID!)` | Query |
-| List/filter | `products(filter: ..., sort: ..., pagination: ...)` | Query |
-| Create | `createProduct(input: ProductInput!)` | Mutation |
-| Update | `updateProduct(id: ID!, input: ProductInput!)` | Mutation |
-| Delete | `deleteProduct(id: ID!)` | Mutation |
+| List / filter | `getTests(where, order, paging)` | Query |
+| Create | `insertTest(input)` | Mutation |
+| Update | `updateTest(where, input)` | Mutation |
+| Delete | `deleteTest(where, input)` | Mutation |
 
-The naming convention: schema name `Product` → query `product` / `products`, mutation prefix `create/update/delete` + schema name.
+**Naming convention** (schema name `Test` as example):
+- Query: `get` + PascalCase schema name + `s` → `getTests`
+- Insert: `insert` + PascalCase schema name → `insertTest`
+- Update: `update` + PascalCase schema name → `updateTest`
+- Delete: `delete` + PascalCase schema name → `deleteTest`
+
+**System fields automatically present on every record:**
+| Field | Meaning |
+|-------|---------|
+| `ItemId` | Unique record identifier |
+| `CreatedDate` | Timestamp when record was created |
+| `LastUpdatedDate` | Timestamp of last update |
+| `CreatedBy` | userId of the creator (from token) |
+| `LastUpdatedBy` | userId of last updater (from token) |
+| `Language` | Language/locale of the record |
+| `OrganizationIds` | Organisation IDs associated with the record |
+| `Tags` | Tags array |
+
+**Only Entity schemas (schemaType: 1) have gateway operations.**
+Child schemas (schemaType: 2) are embedded objects — no gateway operations.
 
 ---
 
-## Query Examples (Product schema with name, price, description, sku)
+## Query — List / Filter
 
-### Get single record
-```graphql
-query GetProduct($id: ID!) {
-  product(id: $id) {
-    id
-    name
-    price
-    description
-    sku
-  }
-}
-```
-Variables: `{ "id": "abc123" }`
+Operation name: `get` + SchemaName + `s` (e.g. `getTests`)
 
-### List all records
 ```graphql
-query ListProducts {
-  products {
+query {
+  getTests(
+    where: {}
+    order: []
+    paging: {
+      pageNo: 1
+      pageSize: 10
+    }
+  ) {
     items {
-      id
-      name
-      price
-      sku
+      ItemId
+      CreatedDate
+      LastUpdatedDate
+      CreatedBy
+      LastUpdatedBy
+      Language
+      OrganizationIds
+      Tags
+      testField
     }
     totalCount
+    pageNo
+    pageSize
+    totalPages
+    hasNextPage
+    hasPreviousPage
   }
 }
 ```
 
-### List with filter (`where`), sorting (`order`), pagination (`paging`)
+**Response pagination fields:**
+`totalCount`, `pageNo`, `pageSize`, `totalPages`, `hasNextPage`, `hasPreviousPage`
+
+**`where`** — pass `{}` for no filter, or add field conditions:
 ```graphql
-query ListProducts($where: ProductFilterInput, $order: ProductSortInput, $paging: PagingInput) {
-  products(where: $where, order: $order, paging: $paging) {
-    items { id name price sku }
-    totalCount
-  }
-}
-```
-Variables:
-```json
-{
-  "where": {
-    "price": { "gte": 10.0 },
-    "name": { "contains": "widget" }
-  },
-  "order": {
-    "field": "price",
-    "direction": "DESC"
-  },
-  "paging": {
-    "pageNo": 1,
-    "pageSize": 10
-  }
+where: {
+  testField: { contains: "sample" }
+  CreatedDate: { gte: "2024-01-01" }
 }
 ```
 
-**`where`** — filter conditions per field. Common operators:
+Common `where` operators:
 | Operator | Meaning |
 |----------|---------|
 | `eq` | Equals |
@@ -144,70 +150,112 @@ Variables:
 | `in` | Value in list |
 | `isNull` | Field is null |
 
-**`order`** — sort by a single field:
-```json
-{ "field": "price", "direction": "ASC" }
-{ "field": "createdAt", "direction": "DESC" }
+**`order`** — pass `[]` for no sort, or sort by field:
+```graphql
+order: [{ field: "CreatedDate", direction: DESC }]
 ```
 
-**`paging`** — pagination:
-```json
-{ "pageNo": 1, "pageSize": 20 }
+**`paging`** — pageNo starts at 1:
+```graphql
+paging: { pageNo: 1, pageSize: 20 }
 ```
-`pageNo` starts at 1. `pageSize` is the number of records per page.
 
 ---
 
-## Mutation Examples
+## Mutation — Insert
 
-### Create record
-```graphql
-mutation CreateProduct($input: ProductInput!) {
-  createProduct(input: $input) {
-    id
-    name
-    price
-  }
-}
-```
-Variables:
-```json
-{
-  "input": {
-    "name": "Widget Pro",
-    "price": 49.99,
-    "description": "A great widget",
-    "sku": "WD-0042"
-  }
-}
-```
-Validation rules (regex) are enforced at this point. Fails with 400 if pattern doesn't match.
+Operation name: `insert` + SchemaName (e.g. `insertTest`)
 
-### Update record
 ```graphql
-mutation UpdateProduct($id: ID!, $input: ProductInput!) {
-  updateProduct(id: $id, input: $input) {
-    id
-    name
-    price
-  }
-}
-```
-Variables:
-```json
-{ "id": "abc123", "input": { "price": 39.99 } }
-```
-
-### Delete record
-```graphql
-mutation DeleteProduct($id: ID!) {
-  deleteProduct(id: $id) {
+mutation {
+  insertTest(
+    input: {
+      testField: "Sample text"
+    }
+  ) {
     acknowledged
     itemId
+    totalImpactedData
+    message
   }
 }
 ```
-Variables: `{ "id": "abc123" }`
+
+- Pass only the user-defined fields in `input` — system fields (ItemId, CreatedDate, CreatedBy etc.) are set automatically
+- Regex validation is enforced here — returns 400 if a field fails its pattern
+- Response `itemId` is the newly created record's `ItemId`
+
+---
+
+## Mutation — Update
+
+Operation name: `update` + SchemaName (e.g. `updateTest`)
+
+```graphql
+mutation {
+  updateTest(
+    where: {
+      testField: { eq: "hjjfdfk" }
+    }
+    input: {
+      testField: "new value"
+    }
+  ) {
+    acknowledged
+    itemId
+    totalImpactedData
+    message
+  }
+}
+```
+
+- `where` targets which records to update (same operators as query `where`)
+- `input` contains only the fields to change
+- `totalImpactedData` shows how many records were updated
+- Regex validation is enforced on fields in `input`
+
+---
+
+## Mutation — Delete
+
+Operation name: `delete` + SchemaName (e.g. `deleteTest`)
+
+```graphql
+mutation {
+  deleteTest(
+    where: {
+      ItemId: { eq: "abc123" }
+    }
+    input: {
+      isHardDelete: false
+    }
+  ) {
+    acknowledged
+    itemId
+    totalImpactedData
+    message
+  }
+}
+```
+
+- `where` targets which records to delete
+- `isHardDelete: false` → soft delete (record marked as deleted, not removed from DB)
+- `isHardDelete: true` → hard delete (record permanently removed from DB)
+- Pass `where: {}` with caution — deletes ALL records matching no filter
+
+---
+
+## Mutation Response Shape
+
+All mutations return the same response:
+```json
+{
+  "acknowledged": true,
+  "itemId": "<affected-record-id>",
+  "totalImpactedData": 1,
+  "message": null
+}
+```
 
 ---
 
