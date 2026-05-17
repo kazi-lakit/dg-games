@@ -126,31 +126,36 @@ Always start with a Bearer token, then follow the four phases in order.
     → schemaType: 1=Entity (supports CRUD), 2=Child (nested object only, no CRUD)
     → collectionName must be "sb_" + lowercase schema name (Entity only)
     → field type is a string: "String", "Int", "Long", "Float", "Boolean", "DateTime"
-    → Every field must have isPii evaluated — see PII Detection in configure-apis.md
+    → Every field must have isPIIData evaluated — see PII Detection in configure-apis.md
     → Save itemId from response
 
   Step 2c — Add or update fields (if schema exists or needs new fields)
     POST /uds/v1/schemas/fields
     → Safe to call repeatedly — additive/upsert, will not overwrite existing data
     → field type is a string value (not an integer)
-    → Every field must have isPii evaluated — NEVER skip this, even if unsure ask the user
+    → Every field must have isPIIData evaluated — NEVER skip this, even if unsure ask the user
 
   ⚠️ RELOAD REQUIRED after any schema or field change → see Phase 4
 
 
-── PHASE 3: Validation & Access ─────────────────────────────────────────────
+── PHASE 3: Validation & Access (OPTIONAL — only if user requests) ──────────
 
-  These two steps are independent and can be done in any order.
-  Both can be configured at schema level OR field/property level.
+  ⚠️ DO NOT perform Phase 3 steps unless the user explicitly asks to:
+      - Set or change access control, OR
+      - Add or update validation on a field
+  If the user only asks to create/update a schema or add fields → skip Phase 3 entirely,
+  go straight to Phase 4 reload.
 
-  Step 3a — Add regex validation to fields (optional)
+  Steps 3a and 3b are independent — do only the one(s) the user requests.
+
+  Step 3a — Add regex validation to a field (only if user requests validation)
     POST /uds/v1/data-validations
     → Only "Regex" validationType is supported
     → Validation is enforced on every create and update mutation
     → Check existing: GET /uds/v1/data-validations/by-schema-and-field?...
     → Update existing: PUT /uds/v1/data-validations
 
-  Step 3b — Set access control for each operation
+  Step 3b — Set access control (only if user requests access change)
     POST /uds/v1/data-access/security/change  (call once per operation)
     → Configure READ, WRITE, EDIT, DELETE independently
     → accessLevel: 0=Inherited, 1=User, 2=Public, 3=Custom
@@ -161,7 +166,7 @@ Always start with a Bearer token, then follow the four phases in order.
 
   Step 3c — Define policy rules (only if accessLevel = 3 / Custom)
     POST /uds/v1/data-access/policy/create
-    → Must follow Step 3b when accessLevel is set to Custom
+    → Only needed when Step 3b sets accessLevel to Custom
     → Rules use leftSource/operator/rightSource as integers
     → Use nestedGroups + logicalOperator:1 (OR) for multiple role checks
 

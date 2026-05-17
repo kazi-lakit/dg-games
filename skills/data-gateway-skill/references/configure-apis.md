@@ -212,36 +212,73 @@ POST /uds/v1/schemas/fields
 ```
 ```json
 {
-  "itemId": "<schema-id>",
-  "projectKey": "proj-123",
+  "schemaDefinitionItemId": "<schema-id>",
+  "projectKey": "<projectKey>",
+  "projectShortKey": "<projectShortKey>",
+  "deletableFieldNames": [],
   "fields": [
-    { "name": "sku",      "type": "String",  "isArray": false, "isPii": false },
-    { "name": "email",    "type": "String",  "isArray": false, "isPii": true  },
-    { "name": "quantity", "type": "Int",     "isArray": false, "isPii": false },
-    { "name": "price",    "type": "Float",   "isArray": false, "isPii": false },
-    { "name": "address",  "type": "Address", "isArray": false, "isPii": false }
+    {
+      "name": "email",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": true,
+      "isUniqueData": false,
+      "description": "User email address"
+    },
+    {
+      "name": "price",
+      "type": "Float",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "Product price"
+    },
+    {
+      "name": "sku",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": true,
+      "description": "Unique product identifier"
+    }
   ]
 }
 ```
-- `type` is always a **string**: `"String"`, `"Int"`, `"Long"`, `"Float"`, `"Boolean"`, `"DateTime"`
-- To reference a Child schema as a nested field, use the Child schema name as the type (e.g. `"Address"`)
-- `isArray: true` makes the field a list of that type
-- `isPii` — see PII Detection rules below — agent must decide this for every field
-- Additive/upsert — safe to call repeatedly
+
+**Field object properties:**
+| Property | Type | Required | Meaning |
+|----------|------|----------|---------|
+| `name` | string | ✓ | Field name (camelCase) |
+| `type` | string | ✓ | `"String"`, `"Int"`, `"Long"`, `"Float"`, `"Boolean"`, `"DateTime"`, or a Child schema name |
+| `isArray` | bool | ✓ | `true` if the field holds a list of values |
+| `isPIIData` | bool | ✓ | `true` if field contains Personally Identifiable Information — agent must evaluate every field |
+| `isUniqueData` | bool | ✓ | `true` if this field must be unique across all records |
+| `description` | string | ✓ | Human-readable description of the field's purpose |
+
+**Top-level properties:**
+| Property | Meaning |
+|----------|---------|
+| `schemaDefinitionItemId` | The schema's `itemId` from the create/get response |
+| `projectKey` | Project key |
+| `projectShortKey` | Project short key |
+| `deletableFieldNames` | List of field names to remove — pass `[]` if not deleting any fields |
+
+- Additive/upsert — safe to call for new fields or updates to existing ones
+- To delete a field, add its name to `deletableFieldNames`
 
 ---
 
 ## PII Detection — Agent Must Evaluate Every Field
 
 When creating a schema or adding fields, the agent **must evaluate every property** and decide
-whether `isPii` should be `true` or `false`. Never skip this — default assumption is `false`
+whether `isPIIData` should be `true` or `false`. Never skip this — default assumption is `false`
 but the agent must actively check, not blindly default.
 
 ### What is PII (Personally Identifiable Information)?
 
 PII is any data that can directly identify or be used to identify a specific individual.
 
-### Auto-detect `isPii: true` for these categories:
+### Auto-detect `isPIIData: true` for these categories:
 
 **Identity & Government IDs**
 - Social Security Number, National ID, Tax ID, Passport number, Driver's license number
@@ -267,7 +304,7 @@ PII is any data that can directly identify or be used to identify a specific ind
 - Date of birth, age combined with name, IP address (when tied to a user), device ID
 - Field name signals: `dateOfBirth`, `dob`, `birthDate`, `ipAddress`, `deviceId`
 
-### NOT PII (isPii: false)
+### NOT PII (isPIIData: false)
 - Product names, prices, SKUs, descriptions
 - Order IDs, invoice numbers (not linked to a person alone)
 - Timestamps of non-personal events
@@ -279,10 +316,10 @@ PII is any data that can directly identify or be used to identify a specific ind
 ```
 1. Read the field name and its context (what schema is it on?)
 2. Does it match any PII category above?
-   YES → isPii: true
+   YES → isPIIData: true
    NO  → Does it INDIRECTLY identify a person when combined with other fields?
-         YES → isPii: true
-         NO  → isPii: false
+         YES → isPIIData: true
+         NO  → isPIIData: false
 3. If unsure → ask the user: "Does [fieldName] contain personal data that could identify an individual?"
 ```
 
