@@ -126,12 +126,14 @@ Always start with a Bearer token, then follow the four phases in order.
     → schemaType: 1=Entity (supports CRUD), 2=Child (nested object only, no CRUD)
     → collectionName must be "sb_" + lowercase schema name (Entity only)
     → field type is a string: "String", "Int", "Long", "Float", "Boolean", "DateTime"
+    → Every field must have isPii evaluated — see PII Detection in configure-apis.md
     → Save itemId from response
 
   Step 2c — Add or update fields (if schema exists or needs new fields)
     POST /uds/v1/schemas/fields
     → Safe to call repeatedly — additive/upsert, will not overwrite existing data
     → field type is a string value (not an integer)
+    → Every field must have isPii evaluated — NEVER skip this, even if unsure ask the user
 
   ⚠️ RELOAD REQUIRED after any schema or field change → see Phase 4
 

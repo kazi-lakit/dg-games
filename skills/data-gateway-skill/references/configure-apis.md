@@ -215,18 +215,93 @@ POST /uds/v1/schemas/fields
   "itemId": "<schema-id>",
   "projectKey": "proj-123",
   "fields": [
-    { "name": "sku",      "type": "String",  "isArray": false },
-    { "name": "category", "type": "String",  "isArray": false },
-    { "name": "quantity", "type": "Int",     "isArray": false },
-    { "name": "price",    "type": "Float",   "isArray": false },
-    { "name": "address",  "type": "Address", "isArray": false }
+    { "name": "sku",      "type": "String",  "isArray": false, "isPii": false },
+    { "name": "email",    "type": "String",  "isArray": false, "isPii": true  },
+    { "name": "quantity", "type": "Int",     "isArray": false, "isPii": false },
+    { "name": "price",    "type": "Float",   "isArray": false, "isPii": false },
+    { "name": "address",  "type": "Address", "isArray": false, "isPii": false }
   ]
 }
 ```
 - `type` is always a **string**: `"String"`, `"Int"`, `"Long"`, `"Float"`, `"Boolean"`, `"DateTime"`
 - To reference a Child schema as a nested field, use the Child schema name as the type (e.g. `"Address"`)
 - `isArray: true` makes the field a list of that type
+- `isPii` — see PII Detection rules below — agent must decide this for every field
 - Additive/upsert — safe to call repeatedly
+
+---
+
+## PII Detection — Agent Must Evaluate Every Field
+
+When creating a schema or adding fields, the agent **must evaluate every property** and decide
+whether `isPii` should be `true` or `false`. Never skip this — default assumption is `false`
+but the agent must actively check, not blindly default.
+
+### What is PII (Personally Identifiable Information)?
+
+PII is any data that can directly identify or be used to identify a specific individual.
+
+### Auto-detect `isPii: true` for these categories:
+
+**Identity & Government IDs**
+- Social Security Number, National ID, Tax ID, Passport number, Driver's license number
+- Field name signals: `ssn`, `nid`, `nationalId`, `passportNumber`, `driverLicense`, `taxId`, `sin`
+
+**Financial**
+- Credit/debit card number, bank account number, IBAN, routing number, CVV
+- Field name signals: `cardNumber`, `creditCard`, `bankAccount`, `iban`, `cvv`, `accountNumber`
+
+**Medical & Health**
+- Medical record number, health insurance ID, diagnosis, prescription, biometric data
+- Field name signals: `medicalRecord`, `healthInsurance`, `diagnosis`, `bloodType`, `biometric`, `fingerprint`, `faceData`
+
+**Authentication & Credentials**
+- Passwords, PINs, security questions/answers, API keys, tokens
+- Field name signals: `password`, `pin`, `secretKey`, `apiKey`, `authToken`, `securityAnswer`
+
+**Contact & Location (direct identifiers)**
+- Full name, email address, phone number, home address, GPS coordinates
+- Field name signals: `fullName`, `firstName`, `lastName`, `email`, `phone`, `mobile`, `homeAddress`, `gpsLocation`, `coordinates`
+
+**Other identifiers**
+- Date of birth, age combined with name, IP address (when tied to a user), device ID
+- Field name signals: `dateOfBirth`, `dob`, `birthDate`, `ipAddress`, `deviceId`
+
+### NOT PII (isPii: false)
+- Product names, prices, SKUs, descriptions
+- Order IDs, invoice numbers (not linked to a person alone)
+- Timestamps of non-personal events
+- Generic tags, categories, statuses
+- Organisation or company names (not individual person names)
+
+### Decision process for every field:
+
+```
+1. Read the field name and its context (what schema is it on?)
+2. Does it match any PII category above?
+   YES → isPii: true
+   NO  → Does it INDIRECTLY identify a person when combined with other fields?
+         YES → isPii: true
+         NO  → isPii: false
+3. If unsure → ask the user: "Does [fieldName] contain personal data that could identify an individual?"
+```
+
+### Examples
+
+| Field name | Schema | isPii | Reason |
+|------------|--------|-------|--------|
+| `email` | User | true | Direct personal identifier |
+| `password` | User | true | Authentication credential |
+| `ssn` | Employee | true | Government ID |
+| `fullName` | Customer | true | Direct personal identifier |
+| `dateOfBirth` | Patient | true | Personal identifier |
+| `cardNumber` | Payment | true | Financial PII |
+| `productName` | Product | false | Not personal data |
+| `price` | Product | false | Not personal data |
+| `orderId` | Order | false | Not linked to a person alone |
+| `createdDate` | Any | false | System timestamp |
+| `country` | Address | false | Too broad to identify an individual |
+| `streetAddress` | Address | true | Combined with name = direct identifier |
 
 ### Get All Schemas (paginated)
 ```
