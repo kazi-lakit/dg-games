@@ -8,9 +8,12 @@ import {
 import { Button } from '@/components/ui-kit/button';
 import { Input } from '@/components/ui-kit/input';
 import { Label } from '@/components/ui-kit/label';
-import { Match, MatchStatus, TeamInformation, TournamentInformation } from '../../types/match.types';
+import { Match, MatchStatus, TournamentInformation, TeamInformation } from '../../types/match.types';
+import { useGetTournaments } from '@/modules/tournaments/hooks/use-tournaments';
+import { useGetTeams } from '@/modules/teams/hooks/use-teams';
 
 const STATUSES: MatchStatus[] = ['Scheduled', 'Live', 'Completed', 'Cancelled'];
+const SELECT_CLS = 'flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50';
 
 type MatchInput = Omit<Match, 'id'>;
 
@@ -27,6 +30,7 @@ const emptyTournament = (): TournamentInformation => ({ title: '', tournamentId:
 export const CreateMatch = ({ initialData, onClose, onSubmit, isLoading }: CreateMatchProps) => {
   const isEdit = !!initialData;
   const today = new Date().toISOString().split('T')[0];
+
   const [form, setForm] = useState<MatchInput>({
     tournament: initialData?.tournament ?? emptyTournament(),
     homeTeam: initialData?.homeTeam ?? emptyTeam(),
@@ -38,13 +42,25 @@ export const CreateMatch = ({ initialData, onClose, onSubmit, isLoading }: Creat
     status: initialData?.status ?? 'Scheduled',
   });
 
-  const setTeamField = (side: 'homeTeam' | 'awayTeam', key: keyof TeamInformation, value: string) =>
-    setForm((f) => ({ ...f, [side]: { ...f[side], [key]: value } }));
+  const { data: tournamentsData, isLoading: loadingTournaments } = useGetTournaments(0, 100);
+  const { data: teamsData, isLoading: loadingTeams } = useGetTeams(0, 100);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleTournamentChange = (id: string) => {
+    const t = tournamentsData?.data.find((t) => t.id === id);
+    if (t) setForm((f) => ({ ...f, tournament: { title: t.name, tournamentId: t.id } }));
+  };
+
+  const handleTeamChange = (side: 'homeTeam' | 'awayTeam', id: string) => {
+    const t = teamsData?.data.find((t) => t.id === id);
+    if (t) setForm((f) => ({ ...f, [side]: { name: t.name, teamId: t.id } }));
+  };
+
+  const handleSubmit = (e: { preventDefault(): void }) => {
     e.preventDefault();
     onSubmit(form);
   };
+
+  const isBusy = isLoading || loadingTournaments || loadingTeams;
 
   return (
     <DialogContent className="sm:max-w-[520px]">
@@ -52,59 +68,56 @@ export const CreateMatch = ({ initialData, onClose, onSubmit, isLoading }: Creat
         <DialogTitle>{isEdit ? 'Edit Match' : 'Schedule New Match'}</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="m-tournament-title">Tournament Title</Label>
-            <Input
-              id="m-tournament-title"
-              placeholder="e.g. Premier League 2025"
-              value={form.tournament.title}
-              onChange={(e) => setForm((f) => ({ ...f, tournament: { ...f.tournament, title: e.target.value } }))}
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="m-tournament-id">Tournament ID</Label>
-            <Input
-              id="m-tournament-id"
-              placeholder="e.g. T1"
-              value={form.tournament.tournamentId}
-              onChange={(e) => setForm((f) => ({ ...f, tournament: { ...f.tournament, tournamentId: e.target.value } }))}
-              required
-            />
-          </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="m-tournament">Tournament</Label>
+          <select
+            id="m-tournament"
+            className={SELECT_CLS}
+            value={form.tournament.tournamentId}
+            onChange={(e) => handleTournamentChange(e.target.value)}
+            disabled={loadingTournaments}
+            required
+          >
+            <option value="">{loadingTournaments ? 'Loading…' : 'Select a tournament'}</option>
+            {tournamentsData?.data.map((t) => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="grid gap-2">
-            <Label>Home Team</Label>
-            <Input
-              placeholder="Team name"
-              value={form.homeTeam.name}
-              onChange={(e) => setTeamField('homeTeam', 'name', e.target.value)}
-              required
-            />
-            <Input
-              placeholder="Team ID"
+            <Label htmlFor="m-home">Home Team</Label>
+            <select
+              id="m-home"
+              className={SELECT_CLS}
               value={form.homeTeam.teamId}
-              onChange={(e) => setTeamField('homeTeam', 'teamId', e.target.value)}
+              onChange={(e) => handleTeamChange('homeTeam', e.target.value)}
+              disabled={loadingTeams}
               required
-            />
+            >
+              <option value="">{loadingTeams ? 'Loading…' : 'Select home team'}</option>
+              {teamsData?.data.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
           </div>
           <div className="grid gap-2">
-            <Label>Away Team</Label>
-            <Input
-              placeholder="Team name"
-              value={form.awayTeam.name}
-              onChange={(e) => setTeamField('awayTeam', 'name', e.target.value)}
-              required
-            />
-            <Input
-              placeholder="Team ID"
+            <Label htmlFor="m-away">Away Team</Label>
+            <select
+              id="m-away"
+              className={SELECT_CLS}
               value={form.awayTeam.teamId}
-              onChange={(e) => setTeamField('awayTeam', 'teamId', e.target.value)}
+              onChange={(e) => handleTeamChange('awayTeam', e.target.value)}
+              disabled={loadingTeams}
               required
-            />
+            >
+              <option value="">{loadingTeams ? 'Loading…' : 'Select away team'}</option>
+              {teamsData?.data.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -123,7 +136,7 @@ export const CreateMatch = ({ initialData, onClose, onSubmit, isLoading }: Creat
             <Label htmlFor="m-status">Status</Label>
             <select
               id="m-status"
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className={SELECT_CLS}
               value={form.status}
               onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as MatchStatus }))}
             >
@@ -144,8 +157,8 @@ export const CreateMatch = ({ initialData, onClose, onSubmit, isLoading }: Creat
         </div>
 
         <DialogFooter className="pt-2">
-          <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
-          <Button type="submit" disabled={isLoading}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isBusy}>Cancel</Button>
+          <Button type="submit" disabled={isBusy}>
             {isLoading ? 'Saving...' : isEdit ? 'Save Changes' : 'Schedule Match'}
           </Button>
         </DialogFooter>
