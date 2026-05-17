@@ -4,22 +4,34 @@
 
 ```
 POST https://api.seliseblocks.com/idp/v1/Authentication/Token
-x-blocks-key: <BLOCKS_KEY>
+x-blocks-key: <VITE_BLOCKS_KEY>
 Content-Type: application/x-www-form-urlencoded
 
 grant_type=client_credentials
-client_id=<CLIENT_ID>
-client_secret=<CLIENT_SECRET>
+client_id=<VITE_CLIENT_ID>
+client_secret=<VITE_CLIENT_SECRET>
 ```
 
 Response → use `access_token` as Bearer token in all calls below.
-Re-fetch on 401. All three values must come from `.env` — never hardcode.
+Re-fetch on 401. All values must come from `.env` — never hardcode.
+
+**.env variable reference:**
+```
+VITE_BLOCKS_KEY=D4745adc9f2564981aae2826bfc64ba79   ← 35-char alphanumeric
+VITE_PROJECT_KEY=P4745adc9f2564981aae2826bfc64ba79  ← 35-char alphanumeric
+VITE_PROJECT_SLUG=dbahjq                             ← short slug = projectShortKey
+VITE_CLIENT_ID=my_client_id
+VITE_CLIENT_SECRET=my_client_secret
+```
+
+`x-blocks-key` and `projectKey` look similar (both 35-char alphanumeric) but are different values.
+`projectShortKey` = `VITE_PROJECT_SLUG` — short lowercase slug like `"dbahjq"`.
 
 ---
 
 All requests require these headers:
 ```
-x-blocks-key: <BLOCKS_KEY from .env>
+x-blocks-key: <VITE_BLOCKS_KEY>
 Authorization: Bearer <access_token from token endpoint>
 Content-Type: application/json
 ```

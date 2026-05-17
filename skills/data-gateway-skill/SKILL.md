@@ -23,18 +23,30 @@ Base URL: `https://api.seliseblocks.com`
 
 ## Authentication — REQUIRED ON EVERY REQUEST
 
+### Key Values & .env Variables
+
+| Key | .env variable | Format | Example |
+|-----|--------------|--------|---------|
+| `x-blocks-key` | `VITE_BLOCKS_KEY` | 35-char alphanumeric | `D4745adc9f2564981aae2826bfc64ba79` |
+| `projectKey` | `VITE_PROJECT_KEY` | 35-char alphanumeric | `P4745adc9f2564981aae2826bfc64ba79` |
+| `projectShortKey` | `VITE_PROJECT_SLUG` | Short lowercase string | `dbahjq` |
+
+- `x-blocks-key` and `projectKey` are long 35-character alphanumeric strings — similar format, different values
+- `projectShortKey` is a short slug (6–8 chars) — read from `VITE_PROJECT_SLUG` in `.env`
+- `projectShortKey` also comes from the data source GET response (`data.projectShortKey`) — both should match
+
 ### Step 1 — Get a Bearer Token (system/config operations)
 
-Use the IDP token endpoint with `client_credentials` grant. Credentials come from `.env`.
+Use the IDP token endpoint with `client_credentials` grant. All credentials come from `.env`.
 
 ```
 POST https://api.seliseblocks.com/idp/v1/Authentication/Token
-x-blocks-key: <blocks-key>
+x-blocks-key: <VITE_BLOCKS_KEY>
 Content-Type: application/x-www-form-urlencoded
 
 grant_type=client_credentials
-client_id=<client_id>
-client_secret=<client_secret>
+client_id=<VITE_CLIENT_ID>
+client_secret=<VITE_CLIENT_SECRET>
 ```
 
 Response:
@@ -49,22 +61,21 @@ Response:
 Store `access_token` and use it as the Bearer token in all subsequent requests.
 Tokens expire — re-fetch when a 401 is returned.
 
-`.env` keys to read from:
+`.env` keys:
 ```
-BLOCKS_KEY=...
-CLIENT_ID=...
-CLIENT_SECRET=...
+VITE_BLOCKS_KEY=D4745adc9f2564981aae2826bfc64ba79
+VITE_PROJECT_KEY=P4745adc9f2564981aae2826bfc64ba79
+VITE_PROJECT_SLUG=dbahjq
+VITE_CLIENT_ID=my_client_id
+VITE_CLIENT_SECRET=my_client_secret
 ```
 
 ### Step 2 — Include Both Headers on Every Request
 
 ```
-x-blocks-key: <BLOCKS_KEY from .env>
+x-blocks-key: <VITE_BLOCKS_KEY>
 Authorization: Bearer <access_token from Step 1>
 ```
-
-`projectShortKey` is obtained from the data source GET response (`data.projectShortKey`).
-`projectKey` is the longer project identifier used in most configuration endpoints.
 
 ---
 
