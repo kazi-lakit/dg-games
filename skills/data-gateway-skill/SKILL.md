@@ -27,8 +27,8 @@ Base URL: `https://api.seliseblocks.com`
 
 | Key | .env variable | Format | Example |
 |-----|--------------|--------|---------|
-| `x-blocks-key` | `VITE_BLOCKS_KEY` | 35-char alphanumeric | `D4745adc9f2564981aae2826bfc64ba79` |
-| `projectKey` | `VITE_PROJECT_KEY` | 35-char alphanumeric | `P4745adc9f2564981aae2826bfc64ba79` |
+| `x-blocks-key` | `VITE_X_BLOCKS_KEY` | 35-char alphanumeric | `D4745adc9f2564981aae2826bfc64ba79` |
+| `projectKey` | `VITE_X_BLOCKS_KEY` | 35-char alphanumeric | `P4745adc9f2564981aae2826bfc64ba79` |
 | `projectShortKey` | `VITE_PROJECT_SLUG` | Short lowercase string | `dbahjq` |
 
 - `x-blocks-key` and `projectKey` are long 35-character alphanumeric strings — similar format, different values
